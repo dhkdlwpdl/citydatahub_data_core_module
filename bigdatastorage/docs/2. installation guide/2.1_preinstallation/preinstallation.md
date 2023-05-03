@@ -47,7 +47,7 @@
 
 `여기까지의 내용이 수동 및 Docker를 사용한 Thrift 서버 설치 시 공통으로 진행해야 되는 내용이었습니다.`
 
-만약 docker를 사용해서 설치를 하시는 경우에는 좌측 메뉴 리스트에서 `2. 설치 및 기본 설정`의 하위 메뉴 `2.2 (설치 방법1) docker-compose.yml`를 참고해서 진행해주시고, 수동 설치를 진행하시는 경우에는 아래 내용을 포함해서 2.2 Environment Variable ~ 2.5. Run Thrift Server를 순차적으로 이어서 진행해주시기 바랍니다.
+만약 docker를 사용해서 설치를 하시는 경우에는`run on docker`를 참고해서 진행해주시고, 수동 설치를 진행하시는 경우에는 아래 내용을 포함해서 2.2 Environment Variable ~ 2.5. Run Thrift Server를 순차적으로 이어서 진행해주시기 바랍니다.
 
 <br/>
 

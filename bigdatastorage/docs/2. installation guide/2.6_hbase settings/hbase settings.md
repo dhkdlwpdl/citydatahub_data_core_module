@@ -18,6 +18,8 @@ Hbase와 Phoenix 서버를 구성할 때에는 상호 호환되는 버전을 사
 
 `참고)` Apache Phoenix Download : [https://phoenix.apache.org/download.html](https://phoenix.apache.org/download.html)
 
+
+만약 사용하고 있는 Hbase db가 존재하는 경우, 아래 `2.6.2.1 Hbase` 설정은 제외하고 `2.6.2.2 Phoenix` 설정만 진행하도록 합니다. 
 <br/>
 
 ### 2.6.2.1 Hbase
@@ -56,19 +58,16 @@ Hbase와 Phoenix 서버를 구성할 때에는 상호 호환되는 버전을 사
 
 <br/>
 
-- Phoenix 다운로드 및 압축해제
+- `phoenix-server-hbase-2.4-5.1.2.jar` 파일 다운로드
 
     ```bash
-    wget https://dlcdn.apache.org/phoenix/phoenix-5.1.2/phoenix-hbase-2.4-5.1.2-bin.tar.gz 
-
-    # 압축해제 
-    tar -zxvf phoenix-hbase-2.4-5.1.2-bin.tar.gz
+    wget https://repo1.maven.org/maven2/org/apache/phoenix/phoenix-server-hbase-2.4/5.1.2/phoenix-server-hbase-2.4-5.1.2.jar
     ```
 
-- 압축해제 디렉토리 내 `phoenix-server-hbase-2.4-5.1.2.jar` 파일을 hbase 디렉토리 내 lib 디렉토리 하위로 복사
+- hbase 디렉토리 내 lib 디렉토리 하위로 복사
 
     ```bash
-    cp /usr/local/lib/phoenix-hbase-2.4-5.1.2-bin/phoenix-server-hbase-2.4-5.1.2.jar $HBASE_HOME/lib/
+    cp phoenix-server-hbase-2.4-5.1.2.jar $HBASE_HOME/lib/
     ```
 
 - Hbase 재시작
