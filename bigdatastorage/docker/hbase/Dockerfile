@@ -1,6 +1,6 @@
 FROM openjdk:8
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends net-tools curl netcat
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends net-tools curl netcat dos2unix
 
 ENV HBASE_VERSION 2.4.7
 ENV HBASE_URL https://archive.apache.org/dist/hbase/$HBASE_VERSION/hbase-$HBASE_VERSION-bin.tar.gz
@@ -25,11 +25,13 @@ ENV USER=root
 ENV PATH $HBASE_PREFIX/bin/:$PATH
 
 ADD entrypoint.sh /entrypoint.sh
+RUN dos2unix /entrypoint.sh
 RUN chmod a+x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 
 COPY run.sh /run.sh
+RUN dos2unix /run.sh
 RUN chmod +x /run.sh
 
 CMD ["/run.sh"]
