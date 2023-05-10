@@ -37,7 +37,7 @@ task makeTar(type: Tar) {
 }
 
 ext {
-    geohikerVersion = '1.2.55'
+    geohikerVersion = '1.2.56'
 }
 
 dependencies {

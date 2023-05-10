@@ -71,9 +71,9 @@ Thrift 서버를 최초로 실행하는 경우에는 아래 명령을 통해 Thr
 <br/>
 
 - (선택) Geohiker 버전을 업데이트 하기 위해서는 `$THRIFT_HOME/bin/thrift-server.sh` 파일 내 스크립트의 상단 부분에 있는 geohikerVersion의 설정값을 수정해주시기 바랍니다.
-  - Default version: 1.2.55 (Verified version as of March 24, 2023)
+  - Default version: 1.2.56 (Verified version as of May 10, 2023)
   ```aidl
-  geohikerVersion=1.2.55
+  geohikerVersion=1.2.56
   ```
 
 <br/>

@@ -4,7 +4,7 @@ export SPARK_DIST_CLASSPATH=$SPARK_DIST_CLASSPATH:~/.ivy2/jars/*
 sparkMaster="local"
 thriftMode="$1"
 ivyDir=/ivy.settings
-geohikerVersion=1.2.55
+geohikerVersion=1.2.56
 
 # 옵션이름 뒤에 :이 붙은 것은 값을 필요로 함을 의미합니다.
 while getopts opt
@@ -39,9 +39,7 @@ if [ "start" == "${thriftMode}" ]; then
   ${GEOHIKER_HOME}/sbin/datacore-start-thriftserver.sh \
   --master ${sparkMaster} \
   --packages io.dtonic.geohiker:geohiker-spark:${geohikerVersion},io.dtonic.geohiker:geohiker-datastore:${geohikerVersion} \
-  --conf spark.jars.ivySettings=${ivyDir} \
-  --conf spark.sql.extensions=io.dtonic.geohiker.spark.GeohikerSparkExtensions,io.delta.sql.DeltaSparkSessionExtension \
-  --conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog \
+  --conf spark.jars.ivySettings=${ivyDir}
   ${GEOHIKER_HOME}/libs/Thrift-Server-1.0.jar
 elif [ "stop" == "${thriftMode}" ]; then
   ${GEOHIKER_HOME}/sbin/datacore-stop-thriftserver.sh
