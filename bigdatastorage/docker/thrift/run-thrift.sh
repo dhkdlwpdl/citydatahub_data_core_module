@@ -12,3 +12,7 @@ cp /usr/local/spark/jars/postgresql-42.2.19.jar ${HIVE_HOME}/jdbc/
 ${HIVE_HOME}/bin/schematool -initSchema -dbType postgres
 
 ${THRIFT_HOME}/bin/thrift-server.sh start
+
+sleep 2
+
+tail -f ${SPARK_HOME}/logs/*.out

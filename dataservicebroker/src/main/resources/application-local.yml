@@ -33,7 +33,7 @@ datasource:
     baseDirPath: /user/hive/warehouse
 
   hbase:
-    phoenixUrl: jdbc:phoenix:hbase:2181:/hbase
+    phoenixUrl: jdbc:phoenix:zoo1:2181:/hbase
     xmlPath:
 
 # ingestRequest 데이터 벌크처리 쓰레드 설정

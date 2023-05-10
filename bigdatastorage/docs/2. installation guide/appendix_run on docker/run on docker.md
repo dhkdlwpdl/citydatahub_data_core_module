@@ -161,7 +161,7 @@ docker-compose 파일에서는 PostgreSQL의 5432 포트에 접근하도록 포�
 ```
 <property>
     <name>javax.jdo.option.ConnectionURL</name>
-    <value>jdbc:postgresql://7x_postgres:5432/hive</value>
+    <value>jdbc:postgresql://meta_db:5432/hive</value>
 </property>
 ```
 

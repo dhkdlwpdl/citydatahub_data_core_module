@@ -34,7 +34,7 @@ datasource:
 
   hbase:
     phoenixUrl: jdbc:phoenix:182.31.153.5:2189:/hbase
-    xmlPath: hbase-site.xml
+    xmlPath:
 
 # ingestRequest 데이터 벌크처리 쓰레드 설정
 bulk:
