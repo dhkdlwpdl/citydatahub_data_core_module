@@ -93,12 +93,6 @@ RUN chmod -R 744 thrift-server
 
 # Deploy thrift scripts
 WORKDIR ${THRIFT_HOME}/bin
-
-## thrift-server.sh
-ADD thrift-server.sh .
-RUN dos2unix thrift-server.sh
-RUN chmod +x thrift-server.sh
-
 WORKDIR ${THRIFT_HOME}/sbin
 
 ## datacore-start-thriftserver.sh
