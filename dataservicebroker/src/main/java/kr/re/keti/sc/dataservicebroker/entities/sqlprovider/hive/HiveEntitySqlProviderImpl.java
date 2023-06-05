@@ -390,7 +390,7 @@ public class HiveEntitySqlProviderImpl {
 
 		sql.append(insertBuilder.toString()).append(selectBuilder.toString()).append(valueBuilder.toString())
 				.append(asBuilder.toString()).append(")");
-    System.out.print("sql : " + sql.toString());
+    
 		return sql.toString();
 	}
 
@@ -499,12 +499,12 @@ public class HiveEntitySqlProviderImpl {
 				} else if (dbColumnType == DbColumnType.TIMESTAMP) {
 					select.append("#{" + daoAttributeId + ", jdbcType=TIMESTAMP} as ").append(columnName)
 							.append(COMMA_WITH_SPACE);
-				} else if (dbColumnType == DbColumnType.GEOMETRY_4326) {
+				} else if (dbColumnType == DbColumnType.GEOMETRY_4326 && entityDaoVO.containsKey(daoAttributeId)) {
 					select.append("ST_AsGeoJson(ST_GeomFromGeoJSON(#{" + daoAttributeId + "})) as ").append(columnName)
 							.append(COMMA_WITH_SPACE);
 					// select.append("ST_DISKINDEX(ST_asText(ST_GeomFromGeoJSON(#{" + daoAttributeId + "}))) as ")
 					// 		.append(columnName).append("_idx").append(COMMA_WITH_SPACE);
-				} else if (dbColumnType == DbColumnType.GEOMETRY_3857) {
+				} else if (dbColumnType == DbColumnType.GEOMETRY_3857 && entityDaoVO.containsKey(daoAttributeId)) {
 					select.append("ST_AsGeoJson(ST_Transform(ST_FlipCoordinates(ST_GeomFromGeoJSON(#{" + daoAttributeId
 							+ "})), 'epsg:4326','epsg:3857')) as ").append(columnName).append(COMMA_WITH_SPACE);
 				} else {
@@ -815,7 +815,7 @@ public class HiveEntitySqlProviderImpl {
 			sql.append(" where id=#{id}");
 
 		}
-
+		
 		return sql.toString();
 	}
 
@@ -828,144 +828,122 @@ public class HiveEntitySqlProviderImpl {
 	 * @return 생성된 sql문
 	 */
 	public String appendAttr(CommonEntityDaoVO entityDaoVO) {
-
-		List<String> tableColumns = entityDaoVO.getTableColumns();
-
 		StringBuilder sql = new StringBuilder();
+		StringBuilder select = new StringBuilder();
+		StringBuilder update = new StringBuilder();
+		StringBuilder updateColumns = new StringBuilder();
+		StringBuilder updateValues = new StringBuilder();
 
-		List<String> updateColumns = new ArrayList<>();
 
-		// 테이블 설정
-		sql.append("INSERT OVERWRITE TABLE").append(SPACE);
-		sql.append(entityDaoVO.getDbTableName()).append(SPACE);
-		// sql.append("PARTITION (ID)").append(SPACE);
-
-		// Update할 컬럼 설정
-		sql.append("SELECT").append(SPACE);
-
+		sql.append("MERGE INTO").append(SPACE).append(entityDaoVO.getDbTableName()).append(SPACE).append("as target")
+				.append(SPACE);
+		sql.append("USING (select").append(SPACE);
 		Map<String, DataModelDbColumnVO> dbColumnInfoVOMap = entityDaoVO.getDbColumnInfoVOMap();
 		if (dbColumnInfoVOMap != null) {
-			updateColumns.add("NEW_MODIFIED_AT");
-			tableColumns.replaceAll(e -> (e.equals("MODIFIED_AT")) ? "NEW_MODIFIED_AT" : e);
+
+			// 2. Default Column 설정
+			select.append("#{" + DataServiceBrokerCode.DefaultAttributeKey.ID.getCode() + "} as ID")
+					.append(COMMA_WITH_SPACE);
+
+			select.append("from_utc_timestamp(#{")
+					.append(DataServiceBrokerCode.DefaultAttributeKey.CREATED_AT.getCode())
+					.append("}, 'UTC') as CREATED_AT").append(COMMA_WITH_SPACE);
+			select.append("from_utc_timestamp(#{").append(
+					DataServiceBrokerCode.DefaultAttributeKey.MODIFIED_AT.getCode() + "}, 'UTC') as MODIFIED_AT")
+					.append(COMMA_WITH_SPACE);
 
 			if (entityDaoVO.get(DataServiceBrokerCode.DefaultAttributeKey.DATASET_ID.getCode()) != null) {
-				updateColumns.add("NEW_DATASET_ID");
-				tableColumns.replaceAll(e -> (e.equals("DATASET_ID")) ? "NEW_DATASET_ID" : e);
+				select.append("#{" + DataServiceBrokerCode.DefaultAttributeKey.DATASET_ID.getCode() + "} as DATASET_ID")
+						.append(COMMA_WITH_SPACE);
 			}
 
+			update.append("MODIFIED_AT = source.MODIFIED_AT").append(COMMA_WITH_SPACE);
+
+
+			if (entityDaoVO.get(DataServiceBrokerCode.DefaultAttributeKey.DATASET_ID.getCode()) != null) {
+				updateValues.append("source.DATASET_ID").append(COMMA_WITH_SPACE);
+			}
+
+			// 3. Dynamic Entity Column 설정
+			//Set<String> updateQueryCols = entityDaoVO.keySet();
 			for (DataModelDbColumnVO dbColumnInfoVO : dbColumnInfoVOMap.values()) {
 				if (entityDaoVO.get(dbColumnInfoVO.getDaoAttributeId()) == null) {
 					continue;
 				}
-
+				String daoAttributeId = dbColumnInfoVO.getDaoAttributeId();
 				String columnName = dbColumnInfoVO.getColumnName();
 				DbColumnType dbColumnType = dbColumnInfoVO.getColumnType();
 
-				updateColumns.add("NEW_" + dbColumnInfoVO.getColumnName());
-				tableColumns.replaceAll(e -> (e.equals(dbColumnInfoVO.getColumnName())) ? e.contains("_4326")
-						? "ST_AsGeoJson(ST_GeomFromGeoJSON(" + "NEW_" + dbColumnInfoVO.getColumnName() + "))"
-						: e.contains("_3857")
-								? "ST_AsGeoJson(ST_Transform(ST_FlipCoordinates(ST_GeomFromGeoJSON(" + "NEW_"
-										+ dbColumnInfoVO.getColumnName() + ")), 'epsg:4326','epsg:3857'))"
-								: "NEW_" + dbColumnInfoVO.getColumnName()
-						: e);
-				tableColumns.replaceAll(e -> (e.equals(dbColumnInfoVO.getColumnName() + "_idx"))
-						? "ST_DISKINDEX(ST_asText(ST_GeomFromGeoJSON(" + "NEW_" + dbColumnInfoVO.getColumnName() + ")))"
-						: e);
-
-				if (dbColumnType == DbColumnType.ARRAY_INTEGER) {
-					tableColumns.replaceAll(e -> (e.equals(columnName)) ? "ST_ARRAYINT(" + columnName + ")" : e);
-				} else if (dbColumnType == DbColumnType.ARRAY_FLOAT) {
-					tableColumns.replaceAll(e -> (e.equals(columnName)) ? "ST_ARRAYDOUBLE(" + columnName + ")" : e);
-				} else if (dbColumnType == DbColumnType.ARRAY_TIMESTAMP) {
-					tableColumns.replaceAll(e -> (e.equals(columnName)) ? "ST_ARRAYTIMESTAMP(" + columnName + ")" : e);
-				}
-				// else if (dbColumnType == DbColumnType.ARRAY_BOOLEAN) {
-				// tableColumns.replaceAll(e ->
-				// (e.equals(columnName)) ? "ST_ARRAYBOOLEAN(" + columnName + ")" : e);
-				// }
-			}
-		}
-
-		String columnStrings = String.join(",", tableColumns);
-
-		sql.append(columnStrings).append(SPACE);
-
-		sql.append("FROM").append(SPACE);
-
-		sql.append("(select * from ").append(entityDaoVO.getDbTableName()).append(" where id=#{id})")
-				.append(COMMA_WITH_SPACE);
-
-		// Update할 Values 설정
-		sql.append("VALUES (");
-
-		if (dbColumnInfoVOMap != null) {
-			sql.append("from_utc_timestamp(#{").append(DataServiceBrokerCode.DefaultAttributeKey.MODIFIED_AT.getCode())
-					.append("},'UTC')").append(COMMA_WITH_SPACE);
-			;
-
-			if (entityDaoVO.get(DataServiceBrokerCode.DefaultAttributeKey.DATASET_ID.getCode()) != null) {
-				sql.append("#{").append(DataServiceBrokerCode.DefaultAttributeKey.DATASET_ID.getCode()).append("}")
-						.append(COMMA_WITH_SPACE);
-				;
-			}
-
-			for (DataModelDbColumnVO dbColumnInfoVO : dbColumnInfoVOMap.values()) {
-
-				if (entityDaoVO.get(dbColumnInfoVO.getDaoAttributeId()) == null) {
-					continue;
-				}
-
-				String daoAttributeId = dbColumnInfoVO.getDaoAttributeId();
-				DbColumnType dbColumnType = dbColumnInfoVO.getColumnType();
-
-				// Hive나 HBase는 Geometry타입이 별도로 존재하지 않기 때문에, 좌표계 정보포함하는 컬럼은 varchar로 처리하지 않음
 				if (dbColumnType == DbColumnType.VARCHAR) {
-					sql.append("#{").append(daoAttributeId).append(", jdbcType=VARCHAR}");
+					select.append("#{" + daoAttributeId + ", jdbcType=VARCHAR} as ").append(columnName)
+							.append(COMMA_WITH_SPACE);
 				} else if (dbColumnType == DbColumnType.INTEGER) {
-					sql.append("#{").append(daoAttributeId).append(", jdbcType=INTEGER}");
+					select.append("#{" + daoAttributeId + ", jdbcType=INTEGER} as ").append(columnName)
+							.append(COMMA_WITH_SPACE);
 				} else if (dbColumnType == DbColumnType.FLOAT) {
-					sql.append("#{").append(daoAttributeId).append(", jdbcType=DOUBLE}");
-				} else if (dbColumnType == DbColumnType.ARRAY_VARCHAR) {
-					sql.append("array(").append("#{").append(daoAttributeId).append(", typeHandler=")
-							.append(StringArrayListTypeHandler.class.getName()).append(", jdbcType=ARRAY}").append(")");
-				} else if (dbColumnType == DbColumnType.ARRAY_INTEGER) {
-					sql.append("array(").append("#{").append(daoAttributeId).append(", typeHandler=")
-							.append(HiveIntegerArrayListTypeHandler.class.getName()).append(", jdbcType=ARRAY}")
-							.append(")");
-				} else if (dbColumnType == DbColumnType.ARRAY_FLOAT) {
-					sql.append("array(").append("#{").append(daoAttributeId).append(", typeHandler=")
-							.append(HiveDoubleArrayListTypeHandler.class.getName()).append(", jdbcType=ARRAY}")
-							.append(")");
-				} else if (dbColumnType == DbColumnType.ARRAY_TIMESTAMP) {
-					sql.append("array(").append("#{").append(daoAttributeId).append(", typeHandler=")
-							.append(HiveDateArrayListTypeHandler.class.getName()).append(", jdbcType=ARRAY}")
-							.append(")");
-				} else if (dbColumnType == DbColumnType.ARRAY_BOOLEAN) {
-					sql.append("array(").append("#{").append(daoAttributeId).append(", typeHandler=")
-							.append(HiveBooleanArrayListTypeHandler.class.getName()).append(", jdbcType=ARRAY}")
-							.append(")");
-				} else if (dbColumnType == DbColumnType.TIMESTAMP) {
-					sql.append("from_utc_timestamp(#{").append(daoAttributeId).append("},'UTC')");
-				} else if (dbColumnType == DbColumnType.GEOMETRY_4326) { // 컬럼에 4326을 포함하는 경우, Geometry로 간주하여 처리
-					sql.append("#{").append(daoAttributeId).append("}");
-				} else if (dbColumnType == DbColumnType.GEOMETRY_3857) { // 컬럼에 3857을 포함하는 경우, Geometry로 간주하여 처리
-					sql.append("#{").append(daoAttributeId).append("}");
+					select.append("#{" + daoAttributeId + ", jdbcType=FLOAT} as ").append(columnName)
+							.append(COMMA_WITH_SPACE);
 				} else if (dbColumnType == DbColumnType.BOOLEAN) {
-					sql.append("#{").append(daoAttributeId).append(", jdbcType=BOOLEAN}");
+					select.append("#{").append(daoAttributeId).append(", jdbcType=BOOLEAN} as ").append(columnName)
+							.append(COMMA_WITH_SPACE);
+				} else if (dbColumnType == DbColumnType.ARRAY_VARCHAR) {
+					select.append("split(#{" + daoAttributeId + ", typeHandler="
+							+ StringArrayListTypeHandler.class.getName() + ", jdbcType=ARRAY}, ',') as ")
+							.append(columnName).append(COMMA_WITH_SPACE);
+				} else if (dbColumnType == DbColumnType.ARRAY_INTEGER) {
+					select.append("ST_ARRAYINT(split(#{" + daoAttributeId + ", typeHandler="
+							+ HiveIntegerArrayListTypeHandler.class.getName() + ", jdbcType=ARRAY}, ',')) as ")
+							.append(columnName).append(COMMA_WITH_SPACE);
+				} else if (dbColumnType == DbColumnType.ARRAY_FLOAT) {
+					select.append("ST_ARRAYDOUBLE(split(#{" + daoAttributeId + ", typeHandler="
+							+ HiveDoubleArrayListTypeHandler.class.getName() + ", jdbcType=ARRAY}, ',')) as ")
+							.append(columnName).append(COMMA_WITH_SPACE);
+				} else if (dbColumnType == DbColumnType.ARRAY_BOOLEAN) {
+					select.append("ST_ARRAYBOOLEAN(split(#{" + daoAttributeId + ", typeHandler="
+							+ HiveBooleanArrayListTypeHandler.class.getName() + ", jdbcType=ARRAY}, ',')) as ")
+							.append(columnName).append(COMMA_WITH_SPACE);
+				} else if (dbColumnType == DbColumnType.ARRAY_TIMESTAMP) {
+					select.append("ST_ARRAYTIMESTAMP(split(#{" + daoAttributeId + ", typeHandler="
+							+ HiveDateArrayListTypeHandler.class.getName() + ", jdbcType=ARRAY}, ',')) as ")
+							.append(columnName).append(COMMA_WITH_SPACE);
+				} else if (dbColumnType == DbColumnType.TIMESTAMP) {
+					select.append("#{" + daoAttributeId + ", jdbcType=TIMESTAMP} as ").append(columnName)
+							.append(COMMA_WITH_SPACE);
+				} else if (dbColumnType == DbColumnType.GEOMETRY_4326 && entityDaoVO.containsKey(daoAttributeId)) {
+					select.append("ST_AsGeoJson(ST_GeomFromGeoJSON(#{" + daoAttributeId + "})) as ").append(columnName)
+							.append(COMMA_WITH_SPACE);
+					// select.append("ST_DISKINDEX(ST_asText(ST_GeomFromGeoJSON(#{" + daoAttributeId + "}))) as ")
+					// 		.append(columnName).append("_idx").append(COMMA_WITH_SPACE);
+				} else if (dbColumnType == DbColumnType.GEOMETRY_3857 && entityDaoVO.containsKey(daoAttributeId)) {
+					select.append("ST_AsGeoJson(ST_Transform(ST_FlipCoordinates(ST_GeomFromGeoJSON(#{" + daoAttributeId
+							+ "})), 'epsg:4326','epsg:3857')) as ").append(columnName).append(COMMA_WITH_SPACE);
 				} else {
-					sql.append("#{").append(daoAttributeId).append(", jdbcType=VARCHAR}");
+					select.append("#{" + daoAttributeId + "} as ").append(columnName).append(COMMA_WITH_SPACE);
 				}
 
-				sql.append(COMMA_WITH_SPACE);
-			}
+				// update 되는 값에 대해서만 set 쿼리를 구성하도록 필터링 추가
+				update.append(columnName).append(" = ").append("source.").append(columnName).append(COMMA_WITH_SPACE);
+				updateColumns.append(columnName).append(COMMA_WITH_SPACE);
 
-			sql.deleteCharAt(sql.lastIndexOf(COMMA_WITH_SPACE));
-			sql.append(")");
-			sql.append(" AS ").append("(").append(String.join(",", updateColumns)).append(");");
+				updateValues.append("source.").append(columnName).append(COMMA_WITH_SPACE);
+			}
 		}
 
+		// 마지막 콤마 제거 ex) column, ) -> column)
+		select.deleteCharAt(select.length() - 2);
+		sql.append(select).append(") as source").append(SPACE);
+
+		sql.append("ON target.ID = source.ID").append(SPACE);
+
+		sql.append("WHEN MATCHED THEN UPDATE SET").append(SPACE);
+
+		update.deleteCharAt(update.length() - 2);
+		sql.append(update).append(";");
+
+	
 		return sql.toString();
+
+		
 	}
 
 	/**
@@ -1355,7 +1333,7 @@ public class HiveEntitySqlProviderImpl {
 			sql.append(")");
 			sql.append(" AS ").append("(").append(String.join(",", updateColumns)).append(");");
 		}
-
+		
 		return sql.toString();
 	}
 
@@ -1427,7 +1405,7 @@ public class HiveEntitySqlProviderImpl {
 
 		update.append("INSERT OVERWRITE TABLE").append(SPACE);
 		update.append(entityDaoVO.getDbTableName()).append(SPACE);
-		update.append("PARTITION (ID)").append(SPACE);
+		//update.append("PARTITION (ID)").append(SPACE);
 
 		// Update할 컬럼 설정
 		select.append("SELECT").append(SPACE);
@@ -1595,7 +1573,6 @@ public class HiveEntitySqlProviderImpl {
 		sql.append(insertBuilder.toString()).append(selectBuilder.toString()).append(valueBuilder.toString())
 				.append(asBuilder.toString());
 
-		System.out.println(sql.toString());
 		return sql.toString();
 
 	}
@@ -1808,7 +1785,7 @@ public class HiveEntitySqlProviderImpl {
 				}
 			}
 		};
-    System.out.print(sql.toString());
+    
 		return sql.toString();
 	}
 
@@ -1924,7 +1901,77 @@ public class HiveEntitySqlProviderImpl {
 				ORDER_BY("MODIFIED_AT DESC");
 			}
 		};
-
+		
 		return sql.toString();
 	}
+
+	public String selectCount(DbConditionVO dbConditionVO) {
+
+		String selectCondition = dbConditionVO.getSelectCondition();
+		String tableName = dbConditionVO.getTableName();
+		String geoCondition = dbConditionVO.getGeoCondition();
+		String queryCondition = dbConditionVO.getQueryCondition();
+
+		List<String> searchIdList = dbConditionVO.getSearchIdList();
+		String idPattern = dbConditionVO.getIdPattern();
+
+		Integer limit = dbConditionVO.getLimit();
+		Integer offset = dbConditionVO.getOffset();
+
+		SQL sql = new SQL() {
+			{ // 익명의 클래스 생성
+				SELECT("count(id)");
+				FROM(tableName);
+				if (idPattern != null) {
+					WHERE("id ~'" + idPattern + "'");
+
+				}
+				if (searchIdList != null) {
+
+					StringBuilder stringBuilder = new StringBuilder();
+					stringBuilder.append("(");
+
+					for (int i = 0; i < searchIdList.size(); i++) {
+						stringBuilder.append("'");
+						stringBuilder.append(searchIdList.get(i));
+						stringBuilder.append("'");
+
+						if (i != searchIdList.size() - 1) {
+
+							stringBuilder.append(",");
+
+						}
+
+					}
+					stringBuilder.append(")");
+
+					WHERE("id IN " + stringBuilder.toString());
+
+				}
+				if (geoCondition != null) {
+
+					WHERE(geoCondition);
+
+				}
+				if (queryCondition != null) {
+
+					WHERE(queryCondition);
+
+				}
+
+				if (limit != null && limit > 0) {
+
+					LIMIT(limit);
+				}
+
+				if (offset != null) {
+
+					OFFSET(offset);
+				}
+			}
+		};
+		
+		return sql.toString();
+	}
+
 }

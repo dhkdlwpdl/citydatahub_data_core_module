@@ -71,4 +71,6 @@ public interface HiveEntitySqlProvider {
     @SelectProvider(method = "selectHistList")
     List<DynamicEntityDaoVO> selectHistList(DbConditionVO dbConditionVO);
 
+    @SelectProvider(method = "selectCount")
+    Integer selectCount(DbConditionVO dbConditionVO);
 }

@@ -363,7 +363,8 @@ public class HiveEntityDAO implements EntityDAOInterface<DynamicEntityDaoVO> {
         int result;
 
         try {
-            result = mapper.partialAttrUpdate(entityDaoVO);
+                // result = mapper.partialAttrUpdate(entityDaoVO);
+                result = mapper.appendAttr(entityDaoVO);
         } catch (UncategorizedSQLException e) {
             result = concurrentCheckAndExecuteThread(entityDaoVO, mapper, "PARTIAL_ATTR_UPDATE", e);
         }
@@ -450,6 +451,7 @@ public class HiveEntityDAO implements EntityDAOInterface<DynamicEntityDaoVO> {
 
         try {
             result = mapper.appendAttr(entityDaoVO);
+            // result = mapper.replaceAttr(entityDaoVO);
         } catch (UncategorizedSQLException e) {
             result = concurrentCheckAndExecuteThread(entityDaoVO, mapper, "APPEND_ATTR", e);
         }
@@ -1098,7 +1100,13 @@ public class HiveEntityDAO implements EntityDAOInterface<DynamicEntityDaoVO> {
     
     @Override
 	public Integer selectCount(QueryVO queryVO) {
-    	throw new UnsupportedOperationException("HiveDAO not supported 'selectCount'");
+        DbConditionVO dbConditionVO = setQueryCondition(queryVO, true);
+
+
+    	HiveEntitySqlProvider mapper = sqlSession.getMapper(HiveEntitySqlProvider.class);
+        Integer result  = mapper.selectCount(dbConditionVO);
+
+        return result;
 	}
 
 	@Override
