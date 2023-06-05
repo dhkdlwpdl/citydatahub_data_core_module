@@ -34,11 +34,13 @@
   # 스크립트 파일 내 line separator 이슈를 고려하여 각 스크립트 파일 convert 
   yum -y install dos2unix
   dos2unix $THRIFT_HOME/bin/thrift-server.sh
+  dos2unix $THRIFT_HOME/bin/install-dependencies.sh
   dos2unix $GEOHIKER_HOME/sbin/datacore-start-thriftserver.sh
   dos2unix $GEOHIKER_HOME/sbin/datacore-stop-thriftserver.sh
 
   # 실행되는 스크립트 파일 권한 수정 (실행권한 추가)
   chmod +x $THRIFT_HOME/bin/thrift-server.sh
+  chmod +x $THRIFT_HOME/bin/install-dependencies.sh
   chmod +x $GEOHIKER_HOME/sbin/datacore-start-thriftserver.sh
   chmod +x $GEOHIKER_HOME/sbin/datacore-stop-thriftserver.sh
   ```
