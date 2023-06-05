@@ -3,8 +3,8 @@
 export SPARK_DIST_CLASSPATH=$SPARK_DIST_CLASSPATH:~/.ivy2/jars/*
 sparkMaster="local"
 thriftMode="$1"
-ivyDir=/ivy.settings
-geohikerVersion=1.2.56
+ivyDir=/usr/local/lib/ivy.settings
+geohikerVersion=${GEOHIKER_VERSION}
 
 # 옵션이름 뒤에 :이 붙은 것은 값을 필요로 함을 의미합니다.
 while getopts opt

@@ -25,6 +25,7 @@ ENV HADOOP_PROFILE 2.7
 ENV HIVE_VERSION 2.3.7
 ENV HADOOP_VER 3.0.0
 ENV THRIFT_SERVER_VERSION 1.0
+ENV GEOHIKER_VERSION 1.2.56
 
 # Set Environment Variable
 ENV JAVA_HOME /usr/lib/jvm/jre-1.8.0-openjdk
@@ -111,6 +112,8 @@ ADD run-thrift.sh .
 RUN chmod a+x run-thrift.sh
 
 ADD supervisord.conf .
-ADD ivy.settings .
+ADD ivy.settings /usr/local/lib/.
+
+RUN sh ${THRIFT_HOME}/bin/install-dependencies.sh
 
 ENTRYPOINT ["supervisord", "-c", "supervisord.conf"]

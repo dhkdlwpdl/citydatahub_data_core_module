@@ -35,8 +35,16 @@
   # Set Thrift Home   
   export THRIFT_HOME=/usr/local/thrift-server
   export GEOHIKER_HOME=$THRIFT_HOME
+  
+  # Set Geohiker Version
+  export GEOHIKER_VERSION=1.2.56
   ```
 - 작업이 완료된 후에는 아래의 명령을 통해 등록한 환경변수를 적용하도록 합니다.
   ```bash
   source ~/.bashrc
+  ```
+- (선택) Geohiker 버전을 업데이트 하기 위해서는 `GEOHIKER_VERSION` 환경 변수를 수정해주시기 바랍니다.
+  - Default version: 1.2.56 (Verified version as of May 10, 2023)
+  ```aidl
+  geohikerVersion=1.2.56
   ```

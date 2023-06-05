@@ -35,18 +35,10 @@
 
 <br/>
 
-- $THRIFT_HOME/bin/thrift-server.sh 파일에서 ivy.settings 파일 경로 수정
-
+- Thrift 서버를 최초로 실행하는 경우, 우선적으로 필요한 디펜던시들을 다운로드하는 명령을 실행합니다.
   ```bash
-  vi $THRIFT_HOME/bin/thrift-server.sh
-
-  # ivy.settings 파일 내 아래 내용에 대해 수정
-  ...
-  ivyDir=/usr/local/lib/ivy.settings
-  ...
+  $THRIFT_HOME/bin/install-dependencies.sh
   ```
-
-<br/>
 
 
 # 2.6 Thrift 서버 실행
@@ -54,28 +46,10 @@
   ```bash
   $THRIFT_HOME/bin/thrift-server.sh start
   ```
-
-<br/>
-
-Thrift 서버를 최초로 실행하는 경우에는 아래 명령을 통해 Thrift 서버가 10000포트로 붙은 것을 확인한 후에 Thrift 서버를 재시작해야 합니다. (최초 서버 실행 시)
-
-  ```bash
-  # Thrift 서버가 제대로 완전히 올라갔는지 확인
-  netstat -tnlp | grep 10000
-
-  # Thrift 서버 재시작
-  $THRIFT_HOME/bin/thrift-server.sh stop
-  $THRIFT_HOME/bin/thrift-server.sh start
-  ```
-
-<br/>
-
-- (선택) Geohiker 버전을 업데이트 하기 위해서는 `$THRIFT_HOME/bin/thrift-server.sh` 파일 내 스크립트의 상단 부분에 있는 geohikerVersion의 설정값을 수정해주시기 바랍니다.
-  - Default version: 1.2.56 (Verified version as of May 10, 2023)
-  ```aidl
-  geohikerVersion=1.2.56
-  ```
-
+- (참고) Thrift Server를 처음 실행할 때, 실행이 완료될 때까지 시간이 소요될 수 있습니다. 
+  실행이 완료되었다는 것을 확인하려면 `netstat -tnlp | grep 10000` 명령어를 사용하여 
+  10000번 포트가 열렸는지 확인할 수 있습니다.
+  
 <br/>
 
 ## 2.5.1 Beeline을 통해 Thrift 서버 접속 및 테스트
